@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, AutoConfig
 from onnxruntime import InferenceSession
-from scipy.special import softmax
+import numpy as np
 import json
 
 import logging
@@ -41,13 +41,16 @@ def preprocess(text):
         new_text.append(t)
     return " ".join(new_text)
 
+def softmax(x):
+    return np.exp(x) / np.sum(np.exp(x))
+
 def custom_sentiment_function(result_labeled):
-    # auto labels ( 'negative', 'neutral', 'positive')
+    #auto labels ( 'negative', 'neutral', 'positive')
     output = dict(result_labeled)
 
     #custom_labels
-    output['uncertain'] = round(float((output['negative'] + output['positive'])), 4) #always between 0 and 1
-    output['compound'] = round((float(((output['positive']+1)**2 - (output['negative']+1)**2)/(output['neutral']+1)))/4, 4) #always between -1 and 1
+    output['uncertain'] = np.round(float((output['negative'] + output['positive'])), 4) #always between 0 and 1
+    output['compound'] = np.round((float(((output['positive']+1)**2 - (output['negative']+1)**2)/(output['neutral']+1)))/4, 4) #always between -1 and 1
 
     return output
 
@@ -92,7 +95,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         for i in range(result_array.shape[0]):
             label = config.id2label[i]
             score = result_array[i]
-            result_labeled.append((label, round(float(score), 4)))  
+            result_labeled.append((label, np.round(float(score), 4)))  
 
         result_labeled = custom_sentiment_function(result_labeled)
 
