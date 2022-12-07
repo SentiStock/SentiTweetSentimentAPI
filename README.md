@@ -30,10 +30,6 @@ If you don't have az installed run
 
     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-
-
-source ./.venv/bin/activate
-
 ### Publish the app
 Either with:
 Remote build:
@@ -47,27 +43,29 @@ Local build:
 
 ### Recommendations
 We recommend installing the Azure Extension (with Functions) for the VSC.
-It is also recommended to use the onnx runtime instead of the standard huggingface pytorch version. To convert this read:
 
-https://huggingface.co/docs/transformers/serialization
+It is also recommended to use the onnx runtime instead of the standard huggingface pytorch version. Read the [documentation](https://huggingface.co/docs/transformers/serialization) first.
 
 The useful commands are either:
 
-Just hidden state as last layer:
+Just hidden state as last layer
 
     python -m transformers.onnx --model=cardiffnlp/twitter-roberta-base-sentiment-latest onnx/ 
 
-Normal task-specific logits:
+Normal task-specific logits
 
     python -m transformers.onnx --model=cardiffnlp/twitter-roberta-base-sentiment-latest --feature=sequence-classification onnx/
 
 We used the following (cause we had already downloaded model):
-python3 -m transformers.onnx --model=twitter-roberta-base-sentiment.bin onnx
+
+    python3 -m transformers.onnx --model=twitter-roberta-base-sentiment.bin onnx
 
 ### Helpful resources:
 
 [ML inference on Azure- dev.to](https://dev.to/azure/why-use-azure-functions-for-ml-inference-ela)
+
 [Serverless deployment of PyTorch on Azure- medium.com](https://medium.com/pytorch/efficient-serverless-deployment-of-pytorch-models-on-azure-dc9c2b6bfee7)
+
 [- Youtube](https://www.youtube.com/watch?v=MCafgeqWMhQ)
 
-Credits to the [used model](https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest).
+Credits to the [model used](https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest).
