@@ -3,7 +3,10 @@
 # Manually managing azure-functions-worker may cause unexpected issues
 
 azure-functions==1.12.0
+
+#This protobuf version is important, the newest breaks the remote build
 protobuf==3.12.2
+
 onnxruntime==1.13.1
 transformers==4.24.0
-scipy==1.8.0
+scipy==1.8.0 #only for the softmax function, you can minimize the bundle size by implementing your own

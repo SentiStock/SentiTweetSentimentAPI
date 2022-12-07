@@ -1,11 +1,10 @@
 from transformers import AutoTokenizer, AutoConfig
 from onnxruntime import InferenceSession
 from scipy.special import softmax
+import json
 
 import logging
 import azure.functions as func
-import json
-import os
 
 #The HTTP request length is limited to 100 MB (104,857,600 bytes), and the URL length is limited to 4 KB (4,096 bytes). 
 # Json in body ( you can uncomment it and then paste to raw tab in Postman)
@@ -43,15 +42,17 @@ def preprocess(text):
     return " ".join(new_text)
 
 def custom_sentiment_function(result_labeled):
+    # auto labels ( 'negative', 'neutral', 'positive')
     output = dict(result_labeled)
 
     #custom_labels
-    output['uncertain'] = round(float((output['negative'] + output['positive'])), 4)
-    output['compound'] = round((float(((output['positive']+1)*(output['positive']+1) - (output['negative']+1)*(output['negative']+1))/(output['neutral']+1)))/4, 4)
+    output['uncertain'] = round(float((output['negative'] + output['positive'])), 4) #always between 0 and 1
+    output['compound'] = round((float(((output['positive']+1)**2 - (output['negative']+1)**2)/(output['neutral']+1)))/4, 4) #always between -1 and 1
+
     return output
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info('(My log) Python HTTP trigger function started processing a request.')
+    logging.info('(Custom log) Python HTTP trigger function started processing a request.')
 
     req_body_bytes = req.get_body()
     req_body = req_body_bytes.decode("utf-8")
@@ -59,21 +60,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         tweets = json.loads(req_body)["tweets"]
     except ValueError as e:
-        return func.HttpResponse(f"You didn't provide tweets in required format {e}")
+        return func.HttpResponse(f"(Custom error) You didn't provide tweets in required format {e}")
     
-    MODEL_PATH = "./models/cardiffnlp-twitter-roberta-base-sentiment-latest"
+    LOCAL_PATH = "./models/cardiffnlp-twitter-roberta-base-sentiment-latest"
 
-    logging.info(f'(My log) {str(os.listdir())}')
-    
-    #tokenizer = AutoTokenizer.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment-latest") # fetching from Huggingface
-    #tokenizer.save_pretrained("./models/cardiffnlp-twitter-roberta-base-sentiment-latest")
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+    #You run the code below only once, just to fetch the required files from huggingface
+    #REMOTE_PATH = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+    #tokenizer = AutoTokenizer.from_pretrained(REMOTE_PATH) # fetching from Huggingface
+    #tokenizer.save_pretrained(LOCAL_PATH)
+    #config = AutoConfig.from_pretrained(REMOTE_PATH) # fetching from Huggingface
+    #config.save_pretrained(LOCAL_PATH)
 
-    #config = AutoConfig.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment-latest")
-    #config.save_pretrained("./models/cardiffnlp-twitter-roberta-base-sentiment-latest")
-    config = AutoConfig.from_pretrained(MODEL_PATH)
-
-    session = InferenceSession(f"{MODEL_PATH}/twitter-roberta-base-sentiment-latest.onnx")
+    tokenizer = AutoTokenizer.from_pretrained(LOCAL_PATH)
+    config = AutoConfig.from_pretrained(LOCAL_PATH)
+    session = InferenceSession(f"{LOCAL_PATH}/twitter-roberta-base-sentiment-latest.onnx")
 
     scored_batch = []
 
