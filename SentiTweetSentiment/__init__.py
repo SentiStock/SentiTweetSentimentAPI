@@ -42,7 +42,8 @@ def preprocess(text):
     return " ".join(new_text)
 
 def softmax(x):
-    return np.exp(x) / np.sum(np.exp(x))
+    x -= np.max(x)
+    return np.exp(x) / np.sum(np.exp(x), axis=0)
 
 def custom_sentiment_function(result_labeled):
     #auto labels ( 'negative', 'neutral', 'positive')
